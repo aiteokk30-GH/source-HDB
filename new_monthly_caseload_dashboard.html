@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEW MONTHLY CASELOAD DASHBOARD</title>
+<style>
+:root{--navy:#203653;--blue:#3569a8;--bg:#f3f6fa;--ink:#243247;--muted:#68778c;--line:#e4eaf1;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px Arial,sans-serif}
+.wrap{max-width:1200px;margin:28px auto;padding:0 18px}
+header{background:linear-gradient(120deg,#203653,#365d88);color:white;padding:28px;border-radius:16px;margin-bottom:20px}
+h1{font-size:clamp(23px,4vw,34px);margin:0 0 8px;letter-spacing:.3px}
+header p{margin:0;color:#dce7f3}
+.panel{background:white;border:1px solid var(--line);border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 3px 14px #2036530a}
+.controls{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.field{display:flex;flex-direction:column;gap:6px;min-width:170px}
+label{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+input,select{padding:11px 12px;border:1px solid #ccd6e2;border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
+button{border:0;border-radius:8px;padding:11px 15px;font-weight:700;cursor:pointer;background:var(--navy);color:white}
+button.secondary{background:#e9eff6;color:var(--navy)}button.danger{background:#fff0f0;color:#a52c2c}
+.summary{display:grid;grid-template-columns:repeat(6,minmax(130px,1fr));gap:12px;margin-top:18px}
+.metric{background:#f1f5fa;border-radius:11px;padding:15px;min-height:92px}
+.metric span{display:block;color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase}
+.metric strong{display:block;font-size:25px;margin-top:10px;font-variant-numeric:tabular-nums}
+.metric.total{background:#203653;color:white;grid-column:span 2;min-height:112px}
+.metric.total span{color:#dce7f3}.metric.total strong{font-size:clamp(38px,6vw,58px);line-height:1}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:760px}
+th,td{padding:13px 11px;border-bottom:1px solid var(--line);text-align:right}
+th{font-size:12px;color:var(--muted);text-transform:uppercase;background:#f8fafc}
+th:first-child,td:first-child{text-align:left}td:last-child,th:last-child{font-weight:700}
+tfoot td{font-weight:800;background:#f5f8fb}
+input.cell{width:78px;padding:8px;text-align:right}
+input.name{width:170px;padding:8px}
+.note{font-size:13px;color:var(--muted);line-height:1.5}
+.history-item{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.history-item:last-child{border:0}
+.badge{background:#edf3fa;color:#31577f;border-radius:20px;padding:5px 9px;font-size:12px;font-weight:700}
+.empty{color:var(--muted);padding:14px 0}
+@media(max-width:850px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.metric.total{grid-column:span 2}}
+@media(max-width:460px){.summary{grid-template-columns:1fr 1fr}.metric{padding:12px}.metric strong{font-size:21px}.metric.total strong{font-size:42px}.panel{padding:14px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>NEW MONTHLY CASELOAD DASHBOARD</h1>
+  <p>Monthly caseworker caseload overview · CARES · FRC · CMS · MERP · HH</p>
+</header>
+
+<section class="panel">
+  <div class="controls">
+    <div class="field"><label for="month">Reporting month</label><input type="month" id="month"></div>
+    <button id="saveSnapshot">Save monthly snapshot</button>
+    <button class="secondary" id="addWorker">+ Add caseworker</button>
+    <button class="secondary" id="exportCsv">Export current month (CSV)</button>
+  </div>
+  <div class="summary">
+    <div class="metric"><span>CARES cases</span><strong id="caresTotal">0</strong></div>
+    <div class="metric"><span>FRC cases</span><strong id="frcTotal">0</strong></div>
+    <div class="metric"><span>CMS cases</span><strong id="cmsTotal">0</strong></div>
+    <div class="metric"><span>MERP cases</span><strong id="merpTotal">0</strong></div>
+    <div class="metric"><span>HH cases</span><strong id="hhTotal">0</strong></div>
+    <div class="metric total"><span>TOTAL CASES</span><strong id="grandTotal">0</strong></div>
+  </div>
+</section>
+
+<section class="panel">
+  <h2 style="margin:0 0 5px">Caseworker breakdown</h2>
+  <p class="note">Enter each caseworker's figures for the selected month. Changes are saved in this browser automatically.</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Caseworker name</th><th>CARES</th><th>FRC</th><th>CMS</th><th>MERP</th><th>HH</th><th>Total cases</th><th></th></tr></thead>
+      <tbody id="workers"></tbody>
+      <tfoot><tr><td>Overall total</td><td id="tCares">0</td><td id="tFrc">0</td><td id="tCms">0</td><td id="tMerp">0</td><td id="tHh">0</td><td id="tAll">0</td><td></td></tr></tfoot>
+    </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2 style="margin:0 0 5px">Monthly historical snapshots</h2>
+  <p class="note">Save a snapshot at month-end (or whenever required) to preserve that month's figures. Select a saved month above to view or amend its figures. Saving again replaces that month's snapshot with the latest figures.</p>
+  <div id="history"></div>
+</section>
+
+<section class="panel">
+  <h3 style="margin-top:0">Important sharing and data note</h3>
+  <p class="note">This standalone HTML version stores data in the browser's local storage. It is suitable for a prototype or single-device use, but figures entered by one person will not automatically appear for other people. To make a genuinely shared live dashboard, connect it to a shared data source/database and host the page (for example, through an approved organisational platform). Do not enter identifiable or confidential case information into a publicly hosted page.</p>
+</section>
+</div>
+<script>
+const TYPES=['cares','frc','cms','merp','hh'];
+const LABELS={cares:'CARES',frc:'FRC',cms:'CMS',merp:'MERP',hh:'HH'};
+const STORE='monthlyCaseloadDashboard_v1';
+let data=JSON.parse(localStorage.getItem(STORE)||'{}');
+let currentMonth=new Date().toISOString().slice(0,7);
+const $=id=>document.getElementById(id);
+function monthData(month){if(!data[month])data[month]=[];return data[month]}
+function persist(){localStorage.setItem(STORE,JSON.stringify(data))}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function totals(rows){let t={cares:0,frc:0,cms:0,merp:0,hh:0};rows.forEach(r=>TYPES.forEach(k=>t[k]+=Number(r[k])||0));t.all=TYPES.reduce((s,k)=>s+t[k],0);return t}
+function render(){
+ const rows=monthData(currentMonth),t=totals(rows);
+ TYPES.forEach(k=>{$(k+'Total').textContent=t[k];$('t'+k[0].toUpperCase()+k.slice(1)).textContent=t[k]});
+ $('grandTotal').textContent=t.all;$('tAll').textContent=t.all;
+ $('workers').innerHTML='';
+ rows.forEach((r,i)=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input class="name" aria-label="Caseworker name" value="${esc(r.name||'')}" data-i="${i}" data-k="name"></td>`+
+  TYPES.map(k=>`<td><input class="cell" type="number" min="0" step="1" value="${Number(r[k])||0}" data-i="${i}" data-k="${k}" aria-label="${LABELS[k]} cases"></td>`).join('')+
+  `<td><strong>${TYPES.reduce((s,k)=>s+(Number(r[k])||0),0)}</strong></td><td><button class="danger" data-remove="${i}" aria-label="Remove caseworker">Remove</button></td>`;
+  $('workers').appendChild(tr);
+ });
+ $('workers').querySelectorAll('input').forEach(inp=>inp.addEventListener('change',()=>{
+  const r=rows[Number(inp.dataset.i)],k=inp.dataset.k;
+  r[k]=k==='name'?inp.value:Math.max(0,Math.floor(Number(inp.value)||0));
+  persist();render();
+ }));
+ $('workers').querySelectorAll('[data-remove]').forEach(btn=>btn.addEventListener('click',()=>{
+  if(confirm('Remove this caseworker from the selected month?')){rows.splice(Number(btn.dataset.remove),1);persist();render()}
+ }));
+ renderHistory();
+}
+function renderHistory(){
+ const host=$('history'),months=Object.keys(data).sort().reverse();host.innerHTML='';
+ if(!months.length){host.innerHTML='<div class="empty">No monthly snapshots saved yet.</div>';return}
+ months.forEach(m=>{
+  const t=totals(data[m]),div=document.createElement('div');div.className='history-item';
+  const left=document.createElement('div');left.innerHTML=`<strong>${esc(m)}</strong><div class="note">${data[m].length} caseworkers · ${t.all} total cases</div>`;
+  const right=document.createElement('div');right.innerHTML=`<span class="badge">${t.all} cases</span> `;
+  const view=document.createElement('button');view.className='secondary';view.textContent='View month';view.onclick=()=>{$('month').value=m;currentMonth=m;render()};
+  right.appendChild(view);div.append(left,right);host.appendChild(div);
+ });
+}
+$('month').value=currentMonth;
+$('month').addEventListener('change',e=>{currentMonth=e.target.value||currentMonth;render()});
+$('addWorker').addEventListener('click',()=>{monthData(currentMonth).push({name:'',cares:0,frc:0,cms:0,merp:0,hh:0});persist();render()});
+$('saveSnapshot').addEventListener('click',()=>{persist();alert('Snapshot saved for '+currentMonth+'.')});
+$('exportCsv').addEventListener('click',()=>{
+ const rows=monthData(currentMonth),head=['Caseworker','CARES','FRC','CMS','MERP','HH','Total'];
+ const lines=[head,...rows.map(r=>[r.name,...TYPES.map(k=>r[k]||0),TYPES.reduce((s,k)=>s+(Number(r[k])||0),0)])];
+ const csv=lines.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+ const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='caseload-'+currentMonth+'.csv';a.click();URL.revokeObjectURL(url);
+});
+render();
+</script>
+</body>
+</html>
